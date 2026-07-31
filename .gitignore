@@ -7,3 +7,8 @@ worker-configuration.d.ts
 .env*
 !.env.example
 *.log
+
+# Local review and chat screenshots belong outside the repository root.
+/*.png
+/*.jpg
+/*.jpeg
