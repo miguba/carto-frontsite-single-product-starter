@@ -1,0 +1,22 @@
+---
+import Layout from '@/layouts/DefaultLayout/index.astro';
+import { getContentPage } from '@/lib/remote-content';
+import { renderMarkdown } from '@/lib/simple-markdown';
+
+interface Props {
+  blockKey: string;
+}
+
+const { blockKey } = Astro.props;
+const refresh = Astro.url.searchParams.get('___refresh___') === '1';
+const page = await getContentPage(blockKey, { refresh });
+---
+
+<Layout seoInfo={page.seo}>
+  <article class="prose max-w-6xl mx-auto px-4">
+    <header class="page-header">
+      <h1 class="entry-title">{page.title}</h1>
+    </header>
+    <div class="page-content" set:html={renderMarkdown(page.content)} />
+  </article>
+</Layout>

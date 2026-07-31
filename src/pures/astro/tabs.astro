@@ -1,0 +1,147 @@
+---
+import classNames from 'classnames';
+
+interface Tab {
+  id: string;
+  label: string;
+  content: any;
+}
+
+interface Props {
+  tabs: Tab[];
+  className?: string;
+  initialTabId?: string;
+  queryParam?: string;
+}
+
+const {
+  tabs,
+  className,
+  initialTabId = tabs[0]?.id,
+  queryParam = 'product',
+} = Astro.props;
+---
+
+<section class={classNames([className])}>
+  <div class="w-full">
+    <div class="bg-gray-100 rounded-lg">
+      <ul class="grid grid-cols-3 gap-2 p-1">
+        {
+          tabs.map((tab) => (
+            <li class="mr-4 w-full">
+              <button
+                class="w-full tab-button inline-block py-2 text-gray-500 hover:text-primary border-b-2 border-transparent aria-selected:bg-white aria-selected:shadow aria-selected:text-primary cursor-pointer font-h rounded-lg"
+                data-tab={tab.id}
+                aria-selected={tab.id === initialTabId ? 'true' : 'false'}
+              >
+                {tab.label}
+              </button>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <div class="py-4">
+      <slot>
+        {
+          tabs.map((tab) => (
+            <div
+              class="tab-content-item"
+              data-tab={tab.id}
+              class:list={[tab.id === initialTabId ? 'block' : 'hidden']}
+            >
+              {tab.content}
+            </div>
+          ))
+        }
+      </slot>
+    </div>
+  </div>
+</section>
+
+<script
+  is:inline
+  define:vars={{
+    tabs: tabs.map((n) => ({ id: n.id })),
+    initialTabId,
+    queryParam,
+  }}
+>
+  document.addEventListener('DOMContentLoaded', () => {
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const tabContents = document.querySelectorAll('.tab-content-item');
+
+    const getCurrentTabId = () => {
+      const value = new URL(window.location.href).searchParams.get(queryParam);
+      return tabs.some((tab) => tab.id === value) ? value : initialTabId;
+    };
+
+    // 切换 tab 的函数
+    const switchTab = (tabId, event) => {
+      if (event) {
+        event.preventDefault();
+      }
+
+      if (tabId && event) {
+        const url = new URL(window.location.href);
+        url.searchParams.set(queryParam, tabId);
+        url.searchParams.delete('sku');
+        url.hash = '';
+        history.pushState(null, '', url);
+      }
+
+      // 更新按钮状态
+      tabButtons.forEach((btn) => {
+        const isSelected = btn.getAttribute('data-tab') === tabId;
+        btn.setAttribute('aria-selected', isSelected ? 'true' : 'false');
+      });
+
+      // 更新内容可见性
+      tabContents.forEach((content) => {
+        if (content instanceof HTMLElement) {
+          const isVisible = content.getAttribute('data-tab') === tabId;
+          content.classList.toggle('hidden', !isVisible);
+          content.classList.toggle('block', isVisible);
+        }
+      });
+    };
+
+    const currentTabId = getCurrentTabId();
+    if (currentTabId) {
+      switchTab(currentTabId);
+    } else {
+      // 如果没有 hash，默认显示第一个 tab 的内容，但不更新 URL
+      const firstTabId = tabs[0]?.id;
+      if (firstTabId) {
+        tabButtons.forEach((btn) => {
+          btn.setAttribute(
+            'aria-selected',
+            btn.getAttribute('data-tab') === firstTabId ? 'true' : 'false',
+          );
+        });
+        tabContents.forEach((content) => {
+          if (content instanceof HTMLElement) {
+            const isVisible = content.getAttribute('data-tab') === firstTabId;
+            content.classList.toggle('hidden', !isVisible);
+            content.classList.toggle('block', isVisible);
+          }
+        });
+      }
+    }
+
+    window.addEventListener('popstate', () => {
+      const newTabId = getCurrentTabId();
+      switchTab(newTabId);
+    });
+
+    // 为每个按钮添加点击事件
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', (event) => {
+        const tabId = button.getAttribute('data-tab');
+        if (tabId) {
+          switchTab(tabId, event);
+        }
+      });
+    });
+  });
+</script>

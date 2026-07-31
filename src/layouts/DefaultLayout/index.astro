@@ -1,0 +1,189 @@
+---
+import '@fontsource-variable/montserrat';
+import '@/styles/index.css';
+import 'animate.css';
+import { Footer } from './Footer';
+import { Header } from './Header';
+import '@fontsource/libre-caslon-condensed';
+import { SEO } from 'astro-seo';
+import { PreHeader } from './PreHeader';
+import { CookieConsent } from '@/components/CookieConsent/index.tsx';
+import { getSecret } from 'astro:env/server';
+import { getCachedCommerceConfig } from '@/lib/commerce';
+import {
+  getCookieConsentContent,
+  getFooterContent,
+  getHeaderContent,
+  getThemeContent,
+} from '@/lib/remote-content';
+
+const gtmId = getSecret('PUBLIC_GTM_ID');
+const refreshCache = Astro.url.searchParams.get('___refresh___') === '1';
+
+interface Props {
+  checkoutOnly?: boolean;
+  noindex?: boolean;
+  seoInfo?: {
+    title?: string;
+    keywords?: string;
+    description?: string;
+    imgUrl?: string;
+    metas?: { name: string; content: string }[];
+  };
+}
+
+const { seoInfo, checkoutOnly = false, noindex = false } = Astro.props;
+let site = {
+  name: 'Carto Store',
+  supportEmail: '',
+  copyrightYear: String(new Date().getFullYear()),
+};
+try {
+  const commerce = await getCachedCommerceConfig({ refresh: refreshCache });
+  site = { ...site, ...commerce.site };
+} catch (error) {
+  console.warn(
+    'Commerce site configuration unavailable; using defaults.',
+    error,
+  );
+}
+const footerContent = await getFooterContent({ refresh: refreshCache });
+const headerContent = await getHeaderContent({ refresh: refreshCache });
+const theme = await getThemeContent({ refresh: refreshCache });
+const cookieConsentContent = await getCookieConsentContent({
+  refresh: refreshCache,
+});
+
+/* ── Canonical URL: strip query params to avoid duplicate content ── */
+const canonicalUrl = new URL(Astro.url.pathname, Astro.url.origin).href;
+
+/* ── Unified page title with site name suffix ── */
+const pageTitle = seoInfo?.title
+  ? seoInfo.title.includes(site.name)
+    ? seoInfo.title
+    : `${seoInfo.title} | ${site.name}`
+  : site.name;
+---
+
+<!doctype html>
+<html
+  lang="en"
+  style={{
+    '--primary': theme.colors.primary,
+    '--primary-foreground': theme.colors.primaryForeground,
+    '--secondary': theme.colors.secondary,
+    '--background': theme.colors.background,
+    '--foreground': theme.colors.foreground,
+  }}
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href={headerContent.branding.favicon || '/favicon.ico'} />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+
+    {/* ── Canonical URL ── */}
+    <link rel="canonical" href={canonicalUrl} />
+
+    <SEO
+      slot="meta"
+      title={pageTitle}
+      {...seoInfo?.description
+        ? { description: seoInfo.description }
+        : undefined}
+      extend={{
+        meta: [
+          seoInfo?.keywords
+            ? { name: 'keywords', content: seoInfo.keywords }
+            : (undefined as any),
+
+          { name: 'twitter:card', content: 'summary_large_image' },
+          { name: 'twitter:title', content: pageTitle },
+          seoInfo?.description
+            ? { name: 'twitter:description', content: seoInfo?.description }
+            : (undefined as any),
+          seoInfo?.imgUrl
+            ? { name: 'twitter:image', content: seoInfo.imgUrl }
+            : (undefined as any),
+
+          ...(seoInfo?.metas || []),
+        ].filter((n) => !!n),
+      }}
+    />
+
+    {/* ── Open Graph tags (using correct `property` attribute) ── */}
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={pageTitle} />
+    {
+      seoInfo?.description && (
+        <meta property="og:description" content={seoInfo.description} />
+      )
+    }
+    {seoInfo?.imgUrl && <meta property="og:image" content={seoInfo.imgUrl} />}
+
+    {/* Google Tag Manager — loaded only with cookie consent */}
+    {gtmId && <meta name="gtm-id" content={gtmId} />}
+    <script is:inline>
+      (function () {
+        var consent = localStorage.getItem('cookie-consent');
+        if (consent !== 'accepted') return;
+        var meta = document.querySelector('meta[name="gtm-id"]');
+        if (!meta) return;
+        var i = meta.content;
+        window.dataLayer = window.dataLayer || [];
+        window.dataLayer.push({
+          'gtm.start': new Date().getTime(),
+          event: 'gtm.js',
+        });
+        var f = document.getElementsByTagName('script')[0],
+          j = document.createElement('script'),
+          dl = '';
+        j.async = true;
+        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl;
+        f.parentNode.insertBefore(j, f);
+      })();
+    </script>
+
+    {/* ── Slot for page-specific head content (e.g. JSON-LD) ── */}
+    <slot name="head" />
+  </head>
+  <body>
+    {!checkoutOnly && <PreHeader content={headerContent.announcement} />}
+    <Header siteTitle={site.name} content={headerContent.branding} />
+
+    <main>
+      <slot />
+    </main>
+
+    {
+      !checkoutOnly && (
+        <Footer
+          siteTitle={site.name}
+          supportEmail={site.supportEmail}
+          copyrightYear={site.copyrightYear}
+          content={footerContent}
+        />
+      )
+    }
+    {
+      !checkoutOnly && (
+        <CookieConsent content={cookieConsentContent} client:only="react" />
+      )
+    }
+    {/* Google Tag Manager (noscript) */}
+    {
+      gtmId && (
+        <noscript>
+          <iframe
+            src={'https://www.googletagmanager.com/ns.html?id=' + gtmId}
+            height="0"
+            width="0"
+            style="display:none;visibility:hidden"
+          />
+        </noscript>
+      )
+    }
+  </body>
+</html>

@@ -1,0 +1,72 @@
+---
+import { Hero } from '@/pages/__/Hero';
+import Layout from '@/layouts/DefaultLayout/index.astro';
+import { Faqs } from '@/pures/react/Faqs';
+import { FixBar } from '@/pages/__/FixBar';
+import SkuGroup from './__/sku-group.astro';
+import { HeroTip } from './__/HeroTip';
+import { getHomeDecoration } from '@/lib/remote-content';
+import JsonLd from '@/components/JsonLd.astro';
+import { siteTitle } from '@/config/app.config';
+
+const refreshCache = Astro.url.searchParams.get('___refresh___') === '1';
+const decoration = await getHomeDecoration({ refresh: refreshCache });
+const siteUrl = Astro.url.origin;
+
+/* ── JSON-LD: WebSite + Organization ── */
+const websiteSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: decoration.seo.title || siteTitle,
+  url: siteUrl,
+};
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: decoration.seo.title || siteTitle,
+  url: siteUrl,
+  logo: `${siteUrl}/cube.png`,
+};
+
+/* ── JSON-LD: FAQPage ── */
+const faqSchema =
+  decoration.faqs.length > 0 && decoration.faqs[0].faqs.length > 0
+    ? {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: decoration.faqs.flatMap((group) =>
+          group.faqs.map((faq) => ({
+            '@type': 'Question',
+            // NOTE: In the FaqGroup type, `a` holds the question text, `q` holds the answer(s).
+            name: faq.a,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: faq.q.join(' '),
+            },
+          })),
+        ),
+      }
+    : null;
+---
+
+<Layout seoInfo={decoration.seo}>
+  {/* ── Structured data injected into <head> ── */}
+  <JsonLd slot="head" data={websiteSchema} />
+  <JsonLd slot="head" data={organizationSchema} />
+  {faqSchema && <JsonLd slot="head" data={faqSchema} />}
+
+  <Hero
+    className="wrap mb-2"
+    image={decoration.hero.image}
+    imageAlt={decoration.hero.imageAlt}
+  />
+
+  <HeroTip>{decoration.hero.tip}</HeroTip>
+
+  <SkuGroup refresh={refreshCache} productDisplay={decoration.productDisplay} />
+
+  <Faqs faqGroups={decoration.faqs} className="wrap mb-10" client:idle />
+
+  <FixBar client:idle />
+</Layout>

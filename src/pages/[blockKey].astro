@@ -1,0 +1,44 @@
+---
+import Layout from '@/layouts/DefaultLayout/index.astro';
+import { getDynamicPage } from '@/lib/remote-content';
+import { renderMarkdown } from '@/lib/simple-markdown';
+
+const blockKey = Astro.params.blockKey || '';
+const refresh = Astro.url.searchParams.get('___refresh___') === '1';
+let page;
+
+try {
+  page = await getDynamicPage(blockKey, { refresh });
+} catch (error) {
+  console.warn(`Dynamic page "${blockKey}" unavailable.`, error);
+}
+
+if (!page) Astro.response.status = 404;
+---
+
+{
+  page ? (
+    <Layout seoInfo={page.seo} noindex={page.noindex}>
+      <article class="prose max-w-6xl mx-auto px-4">
+        <header class="page-header">
+          <h1 class="entry-title">{page.title}</h1>
+        </header>
+        <div class="page-content" set:html={renderMarkdown(page.content)} />
+      </article>
+    </Layout>
+  ) : (
+    <Layout seoInfo={{ title: 'Page not found' }} noindex>
+      <article class="prose max-w-6xl mx-auto px-4">
+        <header class="page-header">
+          <h1 class="entry-title">Page not found</h1>
+        </header>
+        <div class="page-content">
+          <p>The requested page does not exist.</p>
+          <p>
+            <a href="/">Return home</a>
+          </p>
+        </div>
+      </article>
+    </Layout>
+  )
+}

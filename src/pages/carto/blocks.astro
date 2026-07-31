@@ -1,0 +1,277 @@
+---
+import { getCollection } from 'astro:content';
+
+const sourceFiles = import.meta.glob('/src/content/blocks/*.{md,mdx}', {
+  eager: true,
+  query: '?raw',
+  import: 'default',
+}) as Record<string, string>;
+
+const descriptions: Record<string, string> = {
+  'cookie-consent':
+    'Customize the cookie notice, privacy policy link, and action labels.',
+  'checkout-content':
+    'Customize the countries available in the checkout address form.',
+  'home-content':
+    'Customize the homepage hero, SEO, product display, and FAQs.',
+  'footer-content':
+    'Customize footer branding, navigation links, copyright, support, and currency text.',
+  'header-content':
+    'Customize the announcement bar, store logo, favicon, title, and header links.',
+  theme:
+    'Customize the global storefront colors used by every page and component.',
+  'about-us': 'Introduce your store, service, and ordering experience.',
+  'contact-us': 'Explain how customers can contact your support team.',
+  'privacy-policy': 'Describe how customer and order information is handled.',
+  'refund-shipping-policy':
+    'Set expectations for delivery, cancellations, and refunds.',
+  'terms-conditions':
+    'Define the terms that apply to purchases and use of the store.',
+};
+
+const entries = await getCollection('blocks');
+const blocks = entries
+  .map((entry) => {
+    const blockKey =
+      typeof entry.data.blockKey === 'string' ? entry.data.blockKey : entry.id;
+    const sourceEntry = Object.entries(sourceFiles).find(
+      ([path]) =>
+        path.endsWith(`/${entry.id}.md`) || path.endsWith(`/${entry.id}.mdx`),
+    );
+
+    return {
+      key: blockKey,
+      title:
+        typeof entry.data.title === 'string'
+          ? entry.data.title
+          : blockKey === 'home-content'
+            ? 'Home Content'
+            : blockKey,
+      type: typeof entry.data.type === 'string' ? entry.data.type : 'content',
+      description:
+        descriptions[blockKey] || 'Customize this part of the storefront.',
+      source: sourceEntry?.[1] || '',
+    };
+  })
+  .sort((a, b) => a.title.localeCompare(b.title));
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Available Blocks</title>
+    <style>
+      :root {
+        color: #18212f;
+        background: #f5f7fa;
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        width: min(1080px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 56px 0 80px;
+      }
+
+      header {
+        margin-bottom: 32px;
+      }
+
+      h1 {
+        margin: 0 0 10px;
+        font-size: clamp(32px, 5vw, 48px);
+        letter-spacing: -0.03em;
+      }
+
+      header p {
+        max-width: 720px;
+        margin: 0;
+        color: #5b6574;
+        font-size: 17px;
+        line-height: 1.6;
+      }
+
+      .blocks {
+        display: grid;
+        gap: 20px;
+      }
+
+      article {
+        overflow: hidden;
+        border: 1px solid #dfe3e8;
+        border-radius: 12px;
+        background: white;
+      }
+
+      .block-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        padding: 22px 24px;
+        border-bottom: 1px solid #dfe3e8;
+      }
+
+      .title-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 8px;
+      }
+
+      h2 {
+        margin: 0;
+        font-size: 22px;
+      }
+
+      .type {
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: #eef1f4;
+        color: #5b6574;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .description,
+      .key {
+        margin: 0;
+        color: #5b6574;
+        line-height: 1.5;
+      }
+
+      .key {
+        margin-top: 7px;
+        font-size: 14px;
+      }
+
+      .key code {
+        padding: 3px 6px;
+        border-radius: 5px;
+        background: #eef1f4;
+        color: #18212f;
+      }
+
+      button {
+        flex: none;
+        padding: 10px 14px;
+        border: 0;
+        border-radius: 8px;
+        background: #1769e0;
+        color: white;
+        font: inherit;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #1257bb;
+      }
+
+      pre {
+        max-height: 480px;
+        margin: 0;
+        padding: 22px 24px;
+        overflow: auto;
+        background: #111827;
+        color: #e5e7eb;
+        font-size: 13px;
+        line-height: 1.65;
+      }
+
+      @media (max-width: 640px) {
+        main {
+          padding-top: 36px;
+        }
+
+        .block-heading {
+          flex-direction: column;
+        }
+
+        button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Available Blocks</h1>
+        <p>
+          Copy a Block, create it in the content system with the same key, and
+          edit the YAML to customize its content.
+        </p>
+      </header>
+
+      <div class="blocks">
+        {
+          blocks.map((block) => (
+            <article>
+              <div class="block-heading">
+                <div>
+                  <div class="title-row">
+                    <h2>{block.title}</h2>
+                    <span class="type">{block.type}</span>
+                  </div>
+                  <p class="description">{block.description}</p>
+                  <p class="key">
+                    Block key: <code>{block.key}</code>
+                  </p>
+                </div>
+                <button type="button" class="copy-block" data-copy={block.key}>
+                  Copy YAML
+                </button>
+              </div>
+              <pre>
+                <code id={`block-${block.key}`}>{block.source}</code>
+              </pre>
+            </article>
+          ))
+        }
+      </div>
+    </main>
+
+    <script>
+      document
+        .querySelectorAll<HTMLButtonElement>('.copy-block')
+        .forEach((button) => {
+          button.addEventListener('click', async () => {
+            const key = button.dataset.copy;
+            const source = document.querySelector(
+              `#block-${CSS.escape(key || '')}`,
+            )?.textContent;
+            if (!source) return;
+
+            await navigator.clipboard.writeText(source);
+            const previousLabel = button.textContent;
+            button.textContent = 'Copied';
+            window.setTimeout(() => {
+              button.textContent = previousLabel;
+            }, 1600);
+          });
+        });
+    </script>
+  </body>
+</html>

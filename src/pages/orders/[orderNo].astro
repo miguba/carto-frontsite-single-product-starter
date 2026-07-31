@@ -1,0 +1,292 @@
+---
+import Layout from '@/layouts/DefaultLayout/index.astro';
+import {
+  getCachedCommerceConfig,
+  getOrder,
+  mediaUrl,
+  type Order,
+} from '@/lib/commerce';
+import { siteTitle } from '@/config/app.config';
+
+export const prerender = false;
+
+const orderNo = Astro.params.orderNo || '';
+let order: Order | null = null;
+let mediaBaseUrl = '';
+let successNotice = '';
+let error = '';
+
+try {
+  const [loadedOrder, config] = await Promise.all([
+    orderNo ? getOrder(orderNo) : Promise.resolve(null),
+    getCachedCommerceConfig(),
+  ]);
+  order = loadedOrder;
+  mediaBaseUrl = config.mediaBaseUrl;
+  successNotice = config.checkout.successNotice;
+  if (!order) error = 'Missing order number.';
+} catch (caught) {
+  error =
+    caught instanceof Error ? caught.message : 'Unable to load this order.';
+}
+
+const paid = order?.paymentStatus === 'paid';
+const statusLabel = order ? capitalize(order.status) : '';
+const paymentLabel = order ? capitalize(order.paymentStatus) : '';
+const customerName = order
+  ? `${order.customer.firstName} ${order.customer.lastName}`.trim()
+  : '';
+const money = (amount: number, currency = order?.currency || 'USD') =>
+  new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(
+    (amount || 0) / 100,
+  );
+
+function capitalize(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+---
+
+<Layout
+  seoInfo={{
+    title: order
+      ? `Order ${order.orderNo} | ${siteTitle}`
+      : `Order status | ${siteTitle}`,
+  }}
+  noindex
+>
+  {
+    order ? (
+      <section class="wrap py-8 md:py-16">
+        <div class="mx-auto grid max-w-5xl gap-5">
+          <header
+            class:list={[
+              'relative overflow-hidden rounded-xl px-6 py-8 text-white shadow-xl md:px-10 md:py-12',
+              paid
+                ? 'bg-gradient-to-br from-[#0f4a33] to-[#0b241b]'
+                : 'bg-gradient-to-br from-[#25334a] to-[#111827]',
+            ]}
+          >
+            <div class="relative z-10 max-w-3xl">
+              <div class="mb-4 grid h-12 w-12 place-items-center rounded-full bg-white/15 text-2xl">
+                ✓
+              </div>
+              <p class="mb-2 text-xs font-bold uppercase tracking-[0.12em] text-[#f2d07a]">
+                {paid ? 'Payment complete' : 'Order status'}
+              </p>
+              <h1 class="mb-4 text-4xl font-bold leading-tight md:text-6xl">
+                {paid
+                  ? 'Your order is confirmed.'
+                  : `Payment status: ${paymentLabel}`}
+              </h1>
+              <p class="max-w-2xl text-white/80">
+                {successNotice || 'We are preparing your digital order now.'}
+                Keep <strong>{order.orderNo}</strong> for support and delivery
+                updates.
+              </p>
+              <div class="mt-6 flex flex-wrap gap-3">
+                <a
+                  class="rounded bg-white px-5 py-3 font-bold text-[#123f2d]"
+                  href="/"
+                >
+                  Continue shopping
+                </a>
+                <a
+                  class="rounded border border-white/25 bg-white/10 px-5 py-3 font-bold text-white"
+                  href="/contact-us"
+                >
+                  Contact support
+                </a>
+              </div>
+            </div>
+            <div class="mt-8 border-t border-white/20 pt-5 md:absolute md:bottom-10 md:right-10 md:mt-0 md:border-0 md:pt-0 md:text-right">
+              <div class="text-sm font-bold text-white/70">Order total</div>
+              <div class="text-3xl font-bold">{money(order.totalAmount)}</div>
+              <div class="text-sm text-white/70">
+                {order.itemCount} {order.itemCount === 1 ? 'item' : 'items'} ·{' '}
+                {paymentLabel}
+              </div>
+            </div>
+          </header>
+
+          <div class="grid overflow-hidden rounded-xl border bg-white shadow-sm md:grid-cols-3">
+            {[
+              ['Paid', 'Payment captured', paid],
+              [
+                'Processing',
+                'Preparing digital delivery',
+                order.status === 'processing' || order.status === 'done',
+              ],
+              ['Done', 'Order fulfilled', order.status === 'done'],
+            ].map(([label, note, complete]) => (
+              <div class="flex gap-3 border-b p-5 last:border-b-0 md:border-b-0 md:border-r md:last:border-r-0">
+                <span
+                  class:list={[
+                    'mt-0.5 grid h-5 w-5 place-items-center rounded-full border text-xs',
+                    complete
+                      ? 'border-green-600 bg-green-600 text-white'
+                      : 'border-gray-300',
+                  ]}
+                >
+                  {complete ? '✓' : ''}
+                </span>
+                <div>
+                  <strong>{label}</strong>
+                  <div class="text-sm text-gray-500">{note}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div class="grid gap-6 rounded-xl border bg-white p-6 shadow-sm md:grid-cols-[1.2fr_0.8fr] md:p-8">
+            <div>
+              <div class="mb-4 flex items-center justify-between">
+                <div>
+                  <>
+                    <p class="text-xs font-bold uppercase tracking-wide text-primary">
+                      Receipt
+                    </p>
+                    <h2 class="text-2xl font-bold">Order summary</h2>
+                  </>
+                </div>
+                <span class="rounded-full border px-3 py-1 text-xs font-bold uppercase">
+                  {paymentLabel}
+                </span>
+              </div>
+              <dl class="divide-y border-y">
+                <div class="flex justify-between py-3">
+                  <>
+                    <dt>Status</dt>
+                    <dd>{statusLabel}</dd>
+                  </>
+                </div>
+                <div class="flex justify-between py-3">
+                  <>
+                    <dt>Items</dt>
+                    <dd>{order.itemCount}</dd>
+                  </>
+                </div>
+                <div class="flex justify-between py-3">
+                  <>
+                    <dt>Subtotal</dt>
+                    <dd>{money(order.subtotalAmount)}</dd>
+                  </>
+                </div>
+                <div class="flex justify-between py-3">
+                  <>
+                    <dt>Shipping</dt>
+                    <dd>{money(order.shippingAmount)}</dd>
+                  </>
+                </div>
+                <div class="flex justify-between py-3">
+                  <>
+                    <dt>Tax</dt>
+                    <dd>{money(order.taxAmount)}</dd>
+                  </>
+                </div>
+                <div class="flex justify-between py-4 text-lg font-bold">
+                  <>
+                    <dt>Total</dt>
+                    <dd>{money(order.totalAmount)}</dd>
+                  </>
+                </div>
+              </dl>
+            </div>
+            <div class="md:border-l md:pl-6">
+              <p class="text-xs font-bold uppercase tracking-wide text-primary">
+                Delivery details
+              </p>
+              <h2 class="mb-4 text-2xl font-bold">Customer</h2>
+              <dl class="divide-y border-y">
+                <div class="flex justify-between gap-4 py-3">
+                  <>
+                    <dt>Name</dt>
+                    <dd class="text-right">{customerName}</dd>
+                  </>
+                </div>
+                <div class="flex justify-between gap-4 py-3">
+                  <>
+                    <dt>Email</dt>
+                    <dd class="break-all text-right">{order.customer.email}</dd>
+                  </>
+                </div>
+                <div class="flex justify-between gap-4 py-3">
+                  <>
+                    <dt>Address</dt>
+                    <dd class="text-right">
+                      {order.shippingAddress.address1}
+                      {order.shippingAddress.address2
+                        ? `, ${order.shippingAddress.address2}`
+                        : ''}
+                      <br />
+                      {order.shippingAddress.city},{' '}
+                      {order.shippingAddress.state}{' '}
+                      {order.shippingAddress.postalCode}
+                      <br />
+                      {order.shippingAddress.country}
+                    </dd>
+                  </>
+                </div>
+              </dl>
+            </div>
+          </div>
+
+          <div class="rounded-xl border bg-white p-6 shadow-sm md:p-8">
+            <div class="mb-4 flex items-center justify-between">
+              <>
+                <h2 class="text-2xl font-bold">Items</h2>
+                <span class="text-sm text-gray-500">
+                  {order.items.length} lines
+                </span>
+              </>
+            </div>
+            <div class="divide-y border-y">
+              {order.items.map((item) => {
+                const imageUrl = mediaUrl(item.image, mediaBaseUrl);
+                return (
+                  <article class="grid gap-4 py-5 sm:grid-cols-[80px_1fr_auto] sm:items-center">
+                    <div class="grid h-20 w-20 place-items-center overflow-hidden rounded bg-gray-100">
+                      {imageUrl ? (
+                        <img
+                          class="h-full w-full object-contain"
+                          src={imageUrl}
+                          alt={item.productTitle}
+                        />
+                      ) : (
+                        <span class="font-bold text-primary">3D</span>
+                      )}
+                    </div>
+                    <div>
+                      <strong class="text-lg">{item.productTitle}</strong>
+                      <div class="text-sm text-gray-500">
+                        {item.sku} × {item.quantity}
+                      </div>
+                    </div>
+                    <div class="font-bold sm:text-right">
+                      {money(item.lineTotal)}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </section>
+    ) : (
+      <section class="wrap grid min-h-[60vh] place-items-center py-12">
+        <div class="max-w-xl rounded-xl border bg-white p-8 text-center shadow-sm">
+          <p class="mb-2 text-sm font-bold uppercase tracking-wide text-primary">
+            Order unavailable
+          </p>
+          <h1 class="mb-4 text-4xl font-bold">We could not load this order.</h1>
+          {import.meta.env.DEV && <p class="mb-5 text-gray-500">{error}</p>}
+          <a
+            class="inline-flex rounded bg-primary px-6 py-3 font-bold text-primary-foreground"
+            href="/"
+          >
+            Return to store
+          </a>
+        </div>
+      </section>
+    )
+  }
+</Layout>

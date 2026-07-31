@@ -1,0 +1,143 @@
+---
+import CheckoutForm from '@/components/CheckoutForm';
+import Layout from '@/layouts/DefaultLayout/index.astro';
+import '@/styles/checkout.css';
+import { siteTitle } from '@/config/app.config';
+import { getSecret } from 'astro:env/server';
+import {
+  getCachedCommerceConfig,
+  getCachedProduct,
+  mediaUrl,
+} from '@/lib/commerce';
+import { getCheckoutCountries } from '@/lib/remote-content';
+
+export const prerender = false;
+
+const productSlug = Astro.url.searchParams.get('product') || '';
+const sku = Astro.url.searchParams.get('sku') || '';
+const quantity = Number(Astro.url.searchParams.get('quantity') || '1');
+const refreshCache = Astro.url.searchParams.get('___refresh___') === '1';
+const mapboxAccessToken = getSecret('PUBLIC_MAPBOX_ACCESS_TOKEN') || '';
+
+let checkoutError = '';
+let paymentConfigError = '';
+let paypalClientId = '';
+let paypalCardEnabled = false;
+let stripePublishableKey = '';
+let cartItems: Array<{
+  skuId: string;
+  productSlug: string;
+  apiSku: string;
+  skuName: string;
+  quantity: number;
+  price: number;
+  originalPrice?: number;
+}> = [];
+let subtotal = 0;
+const checkoutCountries = await getCheckoutCountries({
+  refresh: refreshCache,
+});
+
+if (!productSlug || !sku || !Number.isInteger(quantity) || quantity < 1) {
+  checkoutError = 'Missing or invalid checkout selection.';
+} else {
+  try {
+    const [commerceConfig, product] = await Promise.all([
+      getCachedCommerceConfig({ refresh: refreshCache }),
+      getCachedProduct(productSlug, { refresh: refreshCache }),
+    ]);
+    const variant =
+      product.variants.find((item) => item.sku === sku || item.id === sku) ||
+      product.variants.find(
+        (item) => normalizeSku(item.sku) === normalizeSku(sku),
+      );
+
+    if (!variant || variant.stock < quantity) {
+      checkoutError = `The selected SKU is unavailable for ${product.title}.`;
+    } else {
+      paypalClientId = commerceConfig.payments.paypal.enabled
+        ? commerceConfig.payments.paypal.clientId
+        : '';
+      paypalCardEnabled =
+        Boolean(paypalClientId) &&
+        commerceConfig.payments.paypal.creditCardEnabled;
+      stripePublishableKey = commerceConfig.payments.stripe.enabled
+        ? commerceConfig.payments.stripe.publishableKey
+        : '';
+      if (!paypalClientId && !stripePublishableKey) {
+        paymentConfigError =
+          'No payment method is currently available. Please contact support.';
+      }
+      cartItems = [
+        {
+          skuId: variant.id,
+          productSlug: product.slug,
+          apiSku: variant.sku,
+          skuName: variant.sku,
+          quantity,
+          price: variant.price,
+          originalPrice: variant.compareAtPrice ?? undefined,
+        },
+      ];
+      subtotal = variant.price * quantity;
+      // Resolve once during SSR so malformed media configuration is caught here.
+      mediaUrl(variant.image || product.mainImage, commerceConfig.mediaBaseUrl);
+    }
+  } catch (error) {
+    console.error('Failed to prepare checkout:', error);
+    checkoutError =
+      error instanceof Error ? error.message : 'Unable to prepare checkout.';
+  }
+}
+
+function normalizeSku(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+---
+
+<Layout seoInfo={{ title: `Secure Checkout | ${siteTitle}` }} noindex>
+  <section class="checkout-page">
+    <div class="wrap">
+      {
+        checkoutError ? (
+          <div class="mx-auto grid min-h-[55vh] max-w-2xl place-content-center px-4 text-center">
+            <p class="mb-2 text-sm font-bold uppercase tracking-wide text-primary">
+              Checkout unavailable
+            </p>
+            <h1 class="mb-4 text-4xl font-bold">
+              Please select the product again.
+            </h1>
+            <p class="mb-6 text-gray-600">
+              The product or subscription option in this checkout link is no
+              longer available.
+            </p>
+            {import.meta.env.DEV && (
+              <p class="mb-6 text-sm text-gray-500">{checkoutError}</p>
+            )}
+            <a
+              class="mx-auto inline-flex rounded bg-primary px-6 py-3 font-bold text-primary-foreground"
+              href="/"
+            >
+              Return to store
+            </a>
+          </div>
+        ) : (
+          <CheckoutForm
+            paypalClientId={paypalClientId}
+            paypalCardEnabled={paypalCardEnabled}
+            stripePublishableKey={stripePublishableKey}
+            mapboxAccessToken={mapboxAccessToken}
+            paymentConfigError={paymentConfigError}
+            cartItems={cartItems}
+            subtotal={subtotal}
+            countries={checkoutCountries}
+            client:load
+          />
+        )
+      }
+    </div>
+  </section>
+</Layout>

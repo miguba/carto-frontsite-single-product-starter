@@ -1,0 +1,8 @@
+node_modules/
+.astro/
+.wrangler/
+.release-dry-run/
+dist/
+worker-configuration.d.ts
+.env*
+*.log

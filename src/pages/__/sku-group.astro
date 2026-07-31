@@ -1,0 +1,138 @@
+---
+import Tabs from '@/pures/astro/tabs.astro';
+import {
+  getCachedCommerceConfig,
+  getCachedProducts,
+  mediaUrl,
+} from '@/lib/commerce';
+import { TabItem } from '@/components/SkuPanel/TabItem';
+import type { ISku } from '@/types/app.type';
+import {
+  renderMarkdown,
+  stripMarkdownFrontmatter,
+} from '@/lib/simple-markdown';
+import type { ProductDisplayConfig } from '@/types/app.type';
+
+interface Props {
+  refresh?: boolean;
+  productDisplay: ProductDisplayConfig;
+}
+
+const { refresh = false, productDisplay } = Astro.props;
+const [products, commerceConfig] = await Promise.all([
+  getCachedProducts({ refresh }),
+  getCachedCommerceConfig({ refresh }),
+]);
+const productPanels = products.map((product) => ({
+  id: product.slug,
+  title: product.title,
+  image: mediaUrl(product.mainImage, commerceConfig.mediaBaseUrl),
+  features: product.meta.sellingPoints || [],
+  content: stripMarkdownFrontmatter(product.content || ''),
+  skus: product.variants.map((variant): ISku => ({
+    id: variant.id,
+    productSlug: product.slug,
+    apiSku: variant.sku,
+    name: variant.sku,
+    originalPrice: variant.compareAtPrice ?? undefined,
+    price: variant.price,
+    stock: variant.stock,
+    txts: Array.isArray(variant.decoration?.txts)
+      ? (variant.decoration.txts as string[])
+      : [],
+  })),
+}));
+
+const productPanelsBySlug = new Map(
+  productPanels.map((product) => [product.id, product]),
+);
+
+const decorations =
+  productDisplay.mode === 'group'
+    ? productDisplay.group.products.map(({ productSlug, label }) => {
+        const product = productPanelsBySlug.get(productSlug);
+        if (!product) {
+          throw new Error(
+            `Group display is configured for "${productSlug}", but that product was not returned by the Storefront API.`,
+          );
+        }
+        return { ...product, label };
+      })
+    : [];
+
+const requestedProduct = Astro.url.searchParams.get('product');
+const requestedSku = Astro.url.searchParams.get('sku') || undefined;
+const initialProduct = decorations.some((item) => item.id === requestedProduct)
+  ? requestedProduct!
+  : decorations[0]?.id;
+
+const singleProduct =
+  productDisplay.mode === 'single'
+    ? productPanelsBySlug.get(
+        productDisplay.single.productSlug || productPanels[0]?.id,
+      )
+    : undefined;
+
+if (productDisplay.mode === 'single' && !singleProduct) {
+  throw new Error(
+    `Single-product display could not resolve an active product. Configure home-content.productDisplay.single.productSlug or publish one product through Carto.`,
+  );
+}
+---
+
+{
+  productDisplay.mode === 'group' ? (
+    <Tabs
+      tabs={decorations.map((n) => ({
+        id: n.id,
+        label: n.label,
+        content: null,
+      }))}
+      initialTabId={initialProduct}
+      queryParam="product"
+      className="wrap mb-10"
+    >
+      {decorations.map((d) => (
+        <div
+          class="tab-content-item"
+          data-tab={d.id}
+          class:list={[d.id === initialProduct ? 'block' : 'hidden']}
+        >
+          <section class="shadow p-5 md:p-10 rounded-lg">
+            <TabItem
+              className="mb-0 md:mb-10"
+              hdPic={d.image}
+              title={d.title}
+              features={d.features}
+              skus={d.skus}
+              initialSku={d.id === initialProduct ? requestedSku : undefined}
+              client:idle
+            />
+
+            <div class="prose max-w-none content prose-img:my-0 prose-img:block [&>:first-child]:mt-0 -mt-2 md:mt-0 [&_h1]:mt-2 [&_h2]:mt-2 [&_h3]:mt-2 md:[&_h1]:mt-[1.6666667em] md:[&_h2]:mt-[1.6em] md:[&_h3]:mt-[1.6em]">
+              <Fragment set:html={renderMarkdown(d.content)} />
+            </div>
+          </section>
+        </div>
+      ))}
+    </Tabs>
+  ) : (
+    <section class="wrap mb-10 pt-4">
+      <div class="shadow p-5 md:p-10 rounded-lg">
+        <TabItem
+          className="mb-0 md:mb-10"
+          hdPic={singleProduct!.image}
+          title={singleProduct!.title}
+          features={singleProduct!.features}
+          skus={singleProduct!.skus}
+          initialSku={requestedSku}
+          client:idle
+        />
+
+        <div class="prose max-w-none content prose-img:my-0 prose-img:block [&>:first-child]:mt-0 -mt-2 md:mt-0 [&_h1]:mt-2 [&_h2]:mt-2 [&_h3]:mt-2 md:[&_h1]:mt-[1.6666667em] md:[&_h2]:mt-[1.6em] md:[&_h3]:mt-[1.6em]">
+          <Fragment set:html={renderMarkdown(singleProduct!.content)} />
+        </div>
+      </div>
+    </section>
+  )
+}

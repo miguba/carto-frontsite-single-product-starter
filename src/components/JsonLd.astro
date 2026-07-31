@@ -1,0 +1,17 @@
+---
+/**
+ * Generic JSON-LD structured data component.
+ * Usage: <JsonLd data={schemaObject} />
+ */
+interface Props {
+  data: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const { data } = Astro.props;
+const json = JSON.stringify(data, null, 0)
+  .replaceAll('<', '\\u003c')
+  .replaceAll('\u2028', '\\u2028')
+  .replaceAll('\u2029', '\\u2029');
+---
+
+<script is:inline type="application/ld+json" set:html={json} />
