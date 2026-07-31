@@ -48,10 +48,16 @@ faqs:
   title: Frequently Asked Questions
   items:
     # 可根据需要添加、删除或重新排序问答。
-    - question: What is included with my order?
-      answer: The exact contents and available options are listed in the product section above.
-    - question: When will I receive my order?
-      answer: Delivery timing and instructions are shown during checkout and in your order confirmation.
-    - question: How do I get help?
-      answer: Use the contact details in the site footer and include your order number when possible.
+    - question: What is included with this product subscription?
+      answer: You receive the software subscription option selected in the purchase section. Delivery details, activation information, or redemption instructions are sent by email after payment confirmation and order review.
+    - question: Is this delivered digitally?
+      answer: Yes. This is a digital software subscription. Please enter a valid email address at checkout because order confirmation and delivery instructions are sent there.
+    - question: When can I expect to receive my order?
+      answer: All products include free digital delivery in the United States, with an estimated delivery time of 0–1 business days after payment confirmation.
+    - question: Are there any region, language, or account requirements?
+      answer: Yes. This offer is available for purchase and use in the United States, Canada, United Kingdom, and Australia only, is provided in English, and requires a valid Autodesk account set to one of these countries.
+    - question: Can I download updates?
+      answer: Downloads and updates are available for the 2025, 2026, and 2027 versions. You can select the release that best matches your needs.
+    - question: What should I do if I need help after purchase?
+      answer: Contact support with your order number and checkout email address. We can help with delivery status, order verification, and subscription questions.
 ---

@@ -23,6 +23,27 @@ const [products, commerceConfig] = await Promise.all([
   getCachedProducts({ refresh }),
   getCachedCommerceConfig({ refresh }),
 ]);
+
+const AUTOCAD_PRODUCT_SLUG = 'autodesk-autocad-subscription';
+
+function splitDescriptionForNotice(productSlug: string, content: string) {
+  const html = renderMarkdown(content);
+  if (productSlug !== AUTOCAD_PRODUCT_SLUG) {
+    return { beforeNotice: html, afterNotice: '' };
+  }
+
+  const firstParagraphEnd = html.indexOf('</p>');
+  if (firstParagraphEnd === -1) {
+    return { beforeNotice: html, afterNotice: '' };
+  }
+
+  const splitAt = firstParagraphEnd + '</p>'.length;
+  return {
+    beforeNotice: html.slice(0, splitAt),
+    afterNotice: html.slice(splitAt),
+  };
+}
+
 const productPanels = products.map((product) => ({
   id: product.slug,
   title: product.title,
@@ -92,47 +113,85 @@ if (productDisplay.mode === 'single' && !singleProduct) {
       queryParam="product"
       className="wrap mb-10"
     >
-      {decorations.map((d) => (
-        <div
-          class="tab-content-item"
-          data-tab={d.id}
-          class:list={[d.id === initialProduct ? 'block' : 'hidden']}
-        >
-          <section class="shadow p-5 md:p-10 rounded-lg">
+      {decorations.map((d) =>
+        (() => {
+          const description = splitDescriptionForNotice(d.id, d.content);
+          return (
+            <div
+              class="tab-content-item"
+              data-tab={d.id}
+              class:list={[d.id === initialProduct ? 'block' : 'hidden']}
+            >
+              <section class="shadow p-5 md:p-10 rounded-lg">
+                <TabItem
+                  className="mb-0 md:mb-10"
+                  hdPic={d.image}
+                  title={d.title}
+                  features={d.features}
+                  skus={d.skus}
+                  initialSku={
+                    d.id === initialProduct ? requestedSku : undefined
+                  }
+                  client:idle
+                />
+
+                <div class="prose max-w-none content prose-img:my-0 prose-img:block [&>:first-child]:mt-0 -mt-2 md:mt-0 [&_h1]:mt-2 [&_h2]:mt-2 [&_h3]:mt-2 md:[&_h1]:mt-[1.6666667em] md:[&_h2]:mt-[1.6em] md:[&_h3]:mt-[1.6em]">
+                  <Fragment set:html={description.beforeNotice} />
+                  {d.id === AUTOCAD_PRODUCT_SLUG && (
+                    <aside class="not-prose my-5 rounded-lg border-l-4 border-amber-500 bg-amber-100 px-5 py-6 text-base leading-7 text-slate-700 md:my-6">
+                      <strong class="font-bold text-slate-950">
+                        Important Notice:
+                      </strong>{' '}
+                      This product is an account subscription, not an activation
+                      key. You will receive login credentials for a Autodesk
+                      account that includes the valid subscription period for
+                      your order.
+                    </aside>
+                  )}
+                  <Fragment set:html={description.afterNotice} />
+                </div>
+              </section>
+            </div>
+          );
+        })(),
+      )}
+    </Tabs>
+  ) : (
+    (() => {
+      const description = splitDescriptionForNotice(
+        singleProduct!.id,
+        singleProduct!.content,
+      );
+      return (
+        <section class="wrap mb-10 pt-4">
+          <div class="shadow p-5 md:p-10 rounded-lg">
             <TabItem
               className="mb-0 md:mb-10"
-              hdPic={d.image}
-              title={d.title}
-              features={d.features}
-              skus={d.skus}
-              initialSku={d.id === initialProduct ? requestedSku : undefined}
+              hdPic={singleProduct!.image}
+              title={singleProduct!.title}
+              features={singleProduct!.features}
+              skus={singleProduct!.skus}
+              initialSku={requestedSku}
               client:idle
             />
 
             <div class="prose max-w-none content prose-img:my-0 prose-img:block [&>:first-child]:mt-0 -mt-2 md:mt-0 [&_h1]:mt-2 [&_h2]:mt-2 [&_h3]:mt-2 md:[&_h1]:mt-[1.6666667em] md:[&_h2]:mt-[1.6em] md:[&_h3]:mt-[1.6em]">
-              <Fragment set:html={renderMarkdown(d.content)} />
+              <Fragment set:html={description.beforeNotice} />
+              {singleProduct!.id === AUTOCAD_PRODUCT_SLUG && (
+                <aside class="not-prose my-5 rounded-lg border-l-4 border-amber-500 bg-amber-100 px-5 py-6 text-base leading-7 text-slate-700 md:my-6">
+                  <strong class="font-bold text-slate-950">
+                    Important Notice:
+                  </strong>{' '}
+                  This product is an account subscription, not an activation
+                  key. You will receive login credentials for a Autodesk account
+                  that includes the valid subscription period for your order.
+                </aside>
+              )}
+              <Fragment set:html={description.afterNotice} />
             </div>
-          </section>
-        </div>
-      ))}
-    </Tabs>
-  ) : (
-    <section class="wrap mb-10 pt-4">
-      <div class="shadow p-5 md:p-10 rounded-lg">
-        <TabItem
-          className="mb-0 md:mb-10"
-          hdPic={singleProduct!.image}
-          title={singleProduct!.title}
-          features={singleProduct!.features}
-          skus={singleProduct!.skus}
-          initialSku={requestedSku}
-          client:idle
-        />
-
-        <div class="prose max-w-none content prose-img:my-0 prose-img:block [&>:first-child]:mt-0 -mt-2 md:mt-0 [&_h1]:mt-2 [&_h2]:mt-2 [&_h3]:mt-2 md:[&_h1]:mt-[1.6666667em] md:[&_h2]:mt-[1.6em] md:[&_h3]:mt-[1.6em]">
-          <Fragment set:html={renderMarkdown(singleProduct!.content)} />
-        </div>
-      </div>
-    </section>
+          </div>
+        </section>
+      );
+    })()
   )
 }

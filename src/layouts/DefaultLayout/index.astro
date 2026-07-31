@@ -79,6 +79,9 @@ const pageTitle = seoInfo?.title
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script is:inline>
+      document.documentElement.classList.add('js');
+    </script>
     <link rel="icon" href={headerContent.branding.favicon || '/favicon.ico'} />
     {noindex && <meta name="robots" content="noindex,nofollow" />}
 
@@ -172,6 +175,37 @@ const pageTitle = seoInfo?.title
         <CookieConsent content={cookieConsentContent} client:only="react" />
       )
     }
+    <script is:inline>
+      (() => {
+        const prepareImage = (image) => {
+          if (!(image instanceof HTMLImageElement)) return;
+          if (image.dataset.progressiveImage === 'ready') return;
+
+          image.dataset.progressiveImage = 'ready';
+          const reveal = () => image.classList.add('image-loaded');
+
+          if (image.complete) {
+            requestAnimationFrame(reveal);
+            return;
+          }
+
+          image.addEventListener('load', reveal, { once: true });
+          image.addEventListener('error', reveal, { once: true });
+        };
+
+        document.querySelectorAll('img').forEach(prepareImage);
+
+        new MutationObserver((mutations) => {
+          for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+              if (!(node instanceof Element)) continue;
+              if (node.matches('img')) prepareImage(node);
+              node.querySelectorAll('img').forEach(prepareImage);
+            }
+          }
+        }).observe(document.body, { childList: true, subtree: true });
+      })();
+    </script>
     {/* Google Tag Manager (noscript) */}
     {
       gtmId && (
