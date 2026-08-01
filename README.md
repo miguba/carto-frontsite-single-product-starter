@@ -17,7 +17,19 @@ deploy it to your own Cloudflare account.
 
 ## Configuration
 
-Copy `.env.example` to `.env` for local development:
+Install the project and securely connect it to Carto Private:
+
+```sh
+npm install
+npx carto-kit@latest connect
+npm run dev
+```
+
+`carto-kit connect` opens Carto Private's verification flow and writes the
+authorized project configuration to `.env`. Tokens are never passed as
+command-line arguments.
+
+The resulting local configuration uses these environment variables:
 
 ```dotenv
 PUBLIC_COMMERCE_API_BASE_URL=https://carto.example.com
@@ -27,15 +39,6 @@ PUBLIC_GTM_ID=
 ```
 
 `COMMERCE_API_TOKEN` is server-only.
-
-Then start the local development server:
-
-```sh
-npm install
-cp .env.example .env
-# Replace the API URL and token in .env with values from Carto Private.
-npm run dev
-```
 
 Open `http://localhost:4321`. To test from another device on the same network,
 use `npm run dev:host` and open the LAN address printed by Astro.
