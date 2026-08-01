@@ -12,5 +12,22 @@ export default defineConfig({
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      dedupe: ['react', 'react-dom'],
+    },
+    ssr: {
+      optimizeDeps: {
+        include: [
+          'astro-seo',
+          'astro/logger/json',
+          'react',
+          'react/jsx-runtime',
+          'react/jsx-dev-runtime',
+          'react-dom',
+          'react-dom/client',
+          'react-dom/server',
+        ],
+      },
+    },
   },
 });
