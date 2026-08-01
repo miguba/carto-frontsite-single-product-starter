@@ -172,7 +172,7 @@ describe('single-product storefront template', () => {
     ).toBe('https://cdn.example.com/logo.png');
   });
 
-  it('uses an in-memory cache when the Cloudflare Cache API is unavailable', () => {
+  it('uses an in-memory cache when the Web Cache API is unavailable', () => {
     const source = readFileSync(
       new URL('../src/lib/cache-page.ts', import.meta.url),
       'utf8',

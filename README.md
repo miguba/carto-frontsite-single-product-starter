@@ -2,7 +2,7 @@
 
 An open-source starting point for building a single-product storefront backed
 by the Carto Private Commerce API. Clone it, customize it with code or AI, and
-deploy it to your own Cloudflare account.
+deploy it to your preferred hosting platform through Carto Kit.
 
 ## Architecture
 
@@ -11,8 +11,9 @@ deploy it to your own Cloudflare account.
   cookie consent, and the mobile purchase bar.
 - Carto Private remains the system of record for products, inventory, site
   configuration, orders, payments, and Blocks.
-- Cloudflare Cache API caches server-side Carto reads. The Worker creates no
-  D1, KV, R2, Durable Object, or Cron resources.
+- A runtime Web Cache API caches server-side Carto reads when the deployment
+  platform provides one; local and standard Node runtimes use an in-memory
+  fallback.
 - The complete application source belongs to you after cloning this Starter.
 
 ## Configuration
@@ -43,9 +44,8 @@ PUBLIC_GTM_ID=
 Open `http://localhost:4321`. To test from another device on the same network,
 use `npm run dev:host` and open the LAN address printed by Astro.
 
-The production runtime uses Cloudflare's Cache API. Because that API is not
-available in Astro's Node-based development server, local development
-automatically falls back to an in-memory cache. Restarting the dev server
+Runtimes without the Web Cache API, including Astro's Node-based development
+server, automatically fall back to an in-memory cache. Restarting the process
 clears it; adding `?___refresh___=1` to a page refreshes the current entries.
 
 ## Block content
@@ -66,8 +66,8 @@ default.
 
 Carto reads are cached without an application TTL and are isolated by the
 Carto Private origin and project token. Use `?___refresh___=1` on a page to
-bypass and replace the relevant cached reads. Cloudflare may still evict Cache
-API entries according to its platform cache policy.
+bypass and replace the relevant cached reads. A hosting platform may still
+evict Cache API entries according to its cache policy.
 Policy defaults are placeholders and must be reviewed before accepting live
 orders.
 
@@ -121,6 +121,12 @@ npm run check
 npm run build
 ```
 
-To deploy to Cloudflare, authenticate Wrangler and run `npx wrangler deploy`.
-The project is independent of Carto Deploy and may be adapted for another
-hosting platform.
+Configure the deployment target and deploy through Carto Kit:
+
+```sh
+npx carto-kit@latest deploy
+```
+
+The starter contains only the platform-neutral Node SSR build. Carto Kit owns
+deployment-platform adaptation, credentials, generated hosting configuration,
+and publishing.

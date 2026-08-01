@@ -5,10 +5,9 @@ export type CacheOptions = { refresh?: boolean };
 const localCache = new Map<string, unknown>();
 
 /**
- * Cache Carto reads at the edge. Unlike the source project's VPS file cache,
- * this works across Cloudflare isolates and does not depend on a writable
- * filesystem. Astro's Node-based development server does not expose the
- * Cloudflare Cache API, so local development uses an in-memory cache.
+ * Cache Carto reads through the Web Cache API when the runtime provides it.
+ * Node runtimes without that API use an in-memory fallback and do not depend
+ * on a writable filesystem.
  */
 export async function cachePage<T>(
   key: string,

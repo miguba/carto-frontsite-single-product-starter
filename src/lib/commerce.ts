@@ -126,9 +126,10 @@ async function commerceRequest<T>(path: string, init: RequestInit = {}) {
       ...init.headers,
     },
   });
-  const payload = await response
-    .json<{ success?: boolean; data?: unknown }>()
-    .catch(() => null);
+  const payload = (await response.json().catch(() => null)) as {
+    success?: boolean;
+    data?: unknown;
+  } | null;
   if (!response.ok || !payload?.success) {
     const message =
       typeof payload?.data === 'string'

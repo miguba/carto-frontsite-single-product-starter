@@ -37,7 +37,7 @@ No actionable P0, P1, or P2 differences remain for the requested shared-layout c
 
 - Astro/TypeScript diagnostics: passed with 0 errors and 0 warnings.
 - Unit tests: 17 passed.
-- Production build and Wrangler dry run: passed.
+- Production SSR build: passed.
 - Browser console errors: none.
 - Primary interactions tested: page load and shared layout rendering; order submission was intentionally not exercised.
 
@@ -84,7 +84,7 @@ No actionable P0, P1, or P2 differences remain for the requested desktop notice 
 
 - Astro/TypeScript diagnostics: passed with 0 errors and 0 warnings.
 - Unit tests: 17 passed.
-- Production build and Wrangler dry run: passed.
+- Production SSR build: passed.
 - Primary state tested: AutoCAD tab selected and notice rendered between the introduction and feature list.
 - Console check: existing development-only `jsxDEV is not a function` hydration errors remain in unrelated React islands; the server-rendered notice itself produced no error and the production build passed.
 - Responsive check: a pre-existing page-wide narrow-layout issue appears under the browser's 390 px viewport override; it is outside this desktop-reference change and was not introduced by the notice.
