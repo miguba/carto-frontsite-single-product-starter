@@ -6,23 +6,30 @@ import {
   mediaUrl,
   type Order,
 } from '@/lib/commerce';
+import {
+  getOrderSuccessContent,
+  renderTextTemplate,
+} from '@/lib/remote-content';
+import orderSuccessContentSource from '@/content/blocks/order-success-content.md?raw';
 
 export const prerender = false;
 
 const orderNo = Astro.params.orderNo || '';
 let order: Order | null = null;
 let mediaBaseUrl = '';
-let successNotice = '';
+let successNoticeTemplate = '';
 let error = '';
+const refreshCache = Astro.url.searchParams.get('___refresh___') === '1';
 
 try {
-  const [loadedOrder, config] = await Promise.all([
+  const [loadedOrder, config, orderSuccessContent] = await Promise.all([
     orderNo ? getOrder(orderNo) : Promise.resolve(null),
-    getCachedCommerceConfig(),
+    getCachedCommerceConfig({ refresh: refreshCache }),
+    getOrderSuccessContent({ refresh: refreshCache }),
   ]);
   order = loadedOrder;
   mediaBaseUrl = config.mediaBaseUrl;
-  successNotice = config.checkout.successNotice;
+  successNoticeTemplate = orderSuccessContent.successNotice;
   if (!order) error = 'Missing order number.';
 } catch (caught) {
   error =
@@ -43,6 +50,18 @@ const money = (amount: number, currency = order?.currency || 'USD') =>
 function capitalize(value: string) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
+
+const successNotice = order
+  ? renderTextTemplate(successNoticeTemplate, {
+      orderNo: order.orderNo,
+      customerName,
+      customerEmail: order.customer.email,
+      total: money(order.totalAmount),
+      itemCount: order.itemCount,
+      paymentStatus: paymentLabel,
+      orderStatus: statusLabel,
+    })
+  : '';
 ---
 
 <Layout
@@ -51,11 +70,20 @@ function capitalize(value: string) {
   }}
   noindex
 >
+  <script
+    is:inline
+    type="application/yaml"
+    data-carto-block-source="order-success-content"
+    data-carto-block-type="block"
+    set:text={orderSuccessContentSource}
+  />
   {
     order ? (
       <section class="wrap py-8 md:py-16">
         <div class="mx-auto grid max-w-5xl gap-5">
           <header
+            data-carto-block="order-success-content"
+            data-carto-block-type="block"
             class:list={[
               'relative overflow-hidden rounded-xl px-6 py-8 text-white shadow-xl md:px-10 md:py-12',
               paid
@@ -75,11 +103,7 @@ function capitalize(value: string) {
                   ? 'Your order is confirmed.'
                   : `Payment status: ${paymentLabel}`}
               </h1>
-              <p class="max-w-2xl text-white/80">
-                {successNotice || 'We are preparing your digital order now.'}
-                Keep <strong>{order.orderNo}</strong> for support and delivery
-                updates.
-              </p>
+              <p class="max-w-2xl text-white/80">{successNotice}</p>
               <div class="mt-6 flex flex-wrap gap-3">
                 <a
                   class="rounded bg-white px-5 py-3 font-bold text-[#123f2d]"

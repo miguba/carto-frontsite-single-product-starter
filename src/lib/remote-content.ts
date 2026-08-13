@@ -15,18 +15,61 @@ const HEADER_CONTENT_BLOCK_KEY = 'header-content';
 const COOKIE_CONSENT_BLOCK_KEY = 'cookie-consent';
 const THEME_BLOCK_KEY = 'theme';
 const CHECKOUT_CONTENT_BLOCK_KEY = 'checkout-content';
+const ORDER_SUCCESS_CONTENT_BLOCK_KEY = 'order-success-content';
 const NON_ROUTE_PAGE_BLOCK_KEYS = new Set([
   HOME_CONTENT_BLOCK_KEY,
   FOOTER_CONTENT_BLOCK_KEY,
   HEADER_CONTENT_BLOCK_KEY,
   COOKIE_CONSENT_BLOCK_KEY,
   CHECKOUT_CONTENT_BLOCK_KEY,
+  ORDER_SUCCESS_CONTENT_BLOCK_KEY,
 ]);
 
 export interface CheckoutCountry {
   code: string;
   name: string;
   regions?: string[];
+}
+
+export interface OrderSuccessContent {
+  successNotice: string;
+}
+
+export async function getOrderSuccessContent(
+  cacheOptions: CacheOptions = {},
+): Promise<OrderSuccessContent> {
+  const entry = await getEntry('blocks', ORDER_SUCCESS_CONTENT_BLOCK_KEY);
+  const localMeta = isRecord(entry?.data) ? entry.data : {};
+  let remoteMeta: Record<string, unknown> = {};
+
+  try {
+    const blocks = await getCachedBlocksByKeys(
+      [ORDER_SUCCESS_CONTENT_BLOCK_KEY],
+      cacheOptions,
+    );
+    remoteMeta = blocks[ORDER_SUCCESS_CONTENT_BLOCK_KEY]?.meta || {};
+  } catch (error) {
+    console.warn(
+      'Remote order success content unavailable; using local content.',
+      error,
+    );
+  }
+
+  return {
+    successNotice:
+      firstString(remoteMeta.successNotice, localMeta.successNotice) || '',
+  };
+}
+
+export function renderTextTemplate(
+  template: string,
+  variables: Record<string, string | number>,
+) {
+  return template.replace(/\{\{\s*([a-zA-Z][\w]*)\s*\}\}/g, (match, key) =>
+    Object.prototype.hasOwnProperty.call(variables, key)
+      ? String(variables[key])
+      : match,
+  );
 }
 
 export interface CookieConsentContent {
