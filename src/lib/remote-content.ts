@@ -32,6 +32,7 @@ export interface CheckoutCountry {
 }
 
 export interface OrderSuccessContent {
+  successHeading: string;
   successNotice: string;
 }
 
@@ -56,6 +57,8 @@ export async function getOrderSuccessContent(
   }
 
   return {
+    successHeading:
+      firstString(remoteMeta.successHeading, localMeta.successHeading) || '',
     successNotice:
       firstString(remoteMeta.successNotice, localMeta.successNotice) || '',
   };

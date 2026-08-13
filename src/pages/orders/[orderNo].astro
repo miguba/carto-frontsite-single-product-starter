@@ -17,6 +17,7 @@ export const prerender = false;
 const orderNo = Astro.params.orderNo || '';
 let order: Order | null = null;
 let mediaBaseUrl = '';
+let successHeading = '';
 let successNoticeTemplate = '';
 let error = '';
 const refreshCache = Astro.url.searchParams.get('___refresh___') === '1';
@@ -29,6 +30,7 @@ try {
   ]);
   order = loadedOrder;
   mediaBaseUrl = config.mediaBaseUrl;
+  successHeading = orderSuccessContent.successHeading;
   successNoticeTemplate = orderSuccessContent.successNotice;
   if (!order) error = 'Missing order number.';
 } catch (caught) {
@@ -100,7 +102,7 @@ const successNotice = order
               </p>
               <h1 class="mb-4 text-4xl font-bold leading-tight md:text-6xl">
                 {paid
-                  ? 'Your order is confirmed.'
+                  ? successHeading
                   : `Payment status: ${paymentLabel}`}
               </h1>
               <p class="max-w-2xl text-white/80">{successNotice}</p>

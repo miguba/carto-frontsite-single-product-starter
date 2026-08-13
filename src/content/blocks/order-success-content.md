@@ -4,6 +4,9 @@ blockKey: order-success-content
 type: block
 title: Order Success Content
 
+# 支付成功后显示的大标题。
+successHeading: '你的订单需要确认，请检查电子邮件订单通知或垃圾箱'
+
 # 支付成功后显示的提示。支持以下变量：
 # {{orderNo}} 订单号；{{customerName}} 客户姓名；{{customerEmail}} 客户邮箱；
 # {{total}} 格式化后的订单总额；{{itemCount}} 商品数量；
