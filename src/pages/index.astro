@@ -8,23 +8,34 @@ import { HeroTip } from './__/HeroTip';
 import { getHomeDecoration } from '@/lib/remote-content';
 import JsonLd from '@/components/JsonLd.astro';
 import { siteTitle } from '@/config/app.config';
+import { getCachedCommerceConfig } from '@/lib/commerce';
 
 const refreshCache = Astro.url.searchParams.get('___refresh___') === '1';
 const decoration = await getHomeDecoration({ refresh: refreshCache });
 const siteUrl = Astro.url.origin;
+let structuredDataSiteName = siteTitle;
+try {
+  const commerce = await getCachedCommerceConfig({ refresh: refreshCache });
+  structuredDataSiteName = commerce.site.name || siteTitle;
+} catch (error) {
+  console.warn(
+    'Commerce site configuration unavailable for structured data; using the default site title.',
+    error,
+  );
+}
 
 /* ── JSON-LD: WebSite + Organization ── */
 const websiteSchema = {
   '@context': 'https://schema.org',
   '@type': 'WebSite',
-  name: decoration.seo.title || siteTitle,
+  name: structuredDataSiteName,
   url: siteUrl,
 };
 
 const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
-  name: decoration.seo.title || siteTitle,
+  name: structuredDataSiteName,
   url: siteUrl,
   logo: `${siteUrl}/cube.png`,
 };

@@ -10,6 +10,7 @@ import { PreHeader } from './PreHeader';
 import { CookieConsent } from '@/components/CookieConsent/index.tsx';
 import { getSecret } from 'astro:env/server';
 import { getCachedCommerceConfig } from '@/lib/commerce';
+import { siteTitle as defaultSiteTitle } from '@/config/app.config';
 import {
   getCookieConsentContent,
   getFooterContent,
@@ -34,7 +35,7 @@ interface Props {
 
 const { seoInfo, checkoutOnly = false, noindex = false } = Astro.props;
 let site = {
-  name: 'Carto Store',
+  name: defaultSiteTitle,
   supportEmail: '',
   copyrightYear: String(new Date().getFullYear()),
 };
@@ -58,11 +59,13 @@ const cookieConsentContent = await getCookieConsentContent({
 const canonicalUrl = new URL(Astro.url.pathname, Astro.url.origin).href;
 
 /* ── Unified page title with site name suffix ── */
-const pageTitle = seoInfo?.title
-  ? seoInfo.title.includes(site.name)
-    ? seoInfo.title
-    : `${seoInfo.title} | ${site.name}`
-  : site.name;
+const requestedTitle = seoInfo?.title?.trim();
+const pageTitle =
+  !requestedTitle || requestedTitle === defaultSiteTitle
+    ? site.name
+    : requestedTitle === site.name || requestedTitle.endsWith(` | ${site.name}`)
+      ? requestedTitle
+      : `${requestedTitle} | ${site.name}`;
 ---
 
 <!doctype html>

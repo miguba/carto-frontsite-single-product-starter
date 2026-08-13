@@ -6,7 +6,6 @@ import {
   mediaUrl,
   type Order,
 } from '@/lib/commerce';
-import { siteTitle } from '@/config/app.config';
 
 export const prerender = false;
 
@@ -48,9 +47,7 @@ function capitalize(value: string) {
 
 <Layout
   seoInfo={{
-    title: order
-      ? `Order ${order.orderNo} | ${siteTitle}`
-      : `Order status | ${siteTitle}`,
+    title: order ? `Order ${order.orderNo}` : 'Order status',
   }}
   noindex
 >

@@ -2,7 +2,6 @@
 import CheckoutForm from '@/components/CheckoutForm';
 import Layout from '@/layouts/DefaultLayout/index.astro';
 import '@/styles/checkout.css';
-import { siteTitle } from '@/config/app.config';
 import { getSecret } from 'astro:env/server';
 import {
   getCachedCommerceConfig,
@@ -98,7 +97,7 @@ function normalizeSku(value: string) {
 }
 ---
 
-<Layout seoInfo={{ title: `Secure Checkout | ${siteTitle}` }} noindex>
+<Layout seoInfo={{ title: 'Secure Checkout' }} noindex>
   <section class="checkout-page">
     <div class="wrap">
       {
