@@ -14,14 +14,14 @@ announcement:
 # 显示在主页头中的店铺标识。
 # 可用占位符：{siteTitle}。
 # logo 使用一张包含图形与店名的完整 Logo 图片；留空时不显示。
-# logoWidth 和 logoHeight 可选，留空表示不限制图片尺寸。
+# logoWidth 和 logoHeight 默认为 auto，表示按图片自身尺寸自动展示。
 # 支持 px、rem、em、%、vw、vh 或 auto，例如 320px、6rem、50%。
 # favicon 用于浏览器标签页图标；留空时使用模板的默认图标。
 branding:
   href: /
   logo: /logo.svg
   logoAlt: '{siteTitle} logo'
-  logoWidth: ''
-  logoHeight: ''
+  logoWidth: auto
+  logoHeight: auto
   favicon: /favicon.ico
 ---
