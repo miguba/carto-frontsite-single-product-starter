@@ -9,24 +9,26 @@ interface Props {
 export const Header = ({ siteTitle = defaultSiteTitle, content }: Props) => {
   const interpolate = (text: string) =>
     text.replace(/\{siteTitle\}/g, siteTitle);
+  const logoStyle = {
+    ...(content.logoWidth ? { width: content.logoWidth } : {}),
+    ...(content.logoHeight ? { height: content.logoHeight } : {}),
+  };
 
   return (
     <header className="wrap">
       <div className="text-center py-5">
-        <a href={content.href} className="inline-flex items-center gap-3">
+        <a href={content.href} className="inline-block">
           {content.logo && (
             <img
               src={interpolate(content.logo)}
               alt={interpolate(content.logoAlt)}
-              width="50"
-              height="50"
-              className="max-w-[40px] md:max-w-[50px] h-auto"
+              className="block max-w-full"
+              style={logoStyle}
+              data-carto-field="branding.logo"
+              data-carto-field-target="attr:src"
+              data-carto-alt-field="branding.logoAlt"
+              data-carto-style-fields="branding.logoWidth:width,branding.logoHeight:height"
             />
-          )}
-          {content.title && (
-            <span className="text-3xl md:text-5xl font-bold font-h">
-              {interpolate(content.title)}
-            </span>
           )}
         </a>
       </div>

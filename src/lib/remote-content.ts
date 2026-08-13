@@ -96,7 +96,8 @@ export interface HeaderContent {
     href: string;
     logo: string;
     logoAlt: string;
-    title: string;
+    logoWidth: string;
+    logoHeight: string;
     favicon: string;
   };
 }
@@ -425,7 +426,8 @@ export async function getHeaderContent(
       href: firstString(branding.href) || '/',
       logo: resolveContentImage(firstString(branding.logo), mediaBaseUrl),
       logoAlt: firstString(branding.logoAlt) || '',
-      title: firstString(branding.title) || '',
+      logoWidth: normalizeCssSize(branding.logoWidth),
+      logoHeight: normalizeCssSize(branding.logoHeight),
       favicon: resolveContentImage(firstString(branding.favicon), mediaBaseUrl),
     },
   };
@@ -590,6 +592,14 @@ function firstString(...values: unknown[]) {
 function normalizeCssColor(value: unknown, fallback: string) {
   const color = firstString(value);
   return color && /^#[0-9a-f]{6}$/i.test(color) ? color : fallback;
+}
+
+function normalizeCssSize(value: unknown) {
+  const size = firstString(value);
+  if (!size) return '';
+  return /^(?:0|auto|\d+(?:\.\d+)?(?:px|rem|em|%|vw|vh))$/i.test(size)
+    ? size
+    : '';
 }
 
 function normalizeKeywords(value: unknown) {

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="112" viewBox="0 0 360 112" role="img" aria-labelledby="title">
+  <title id="title">3D BID</title>
+  <image href="cube.png" x="8" y="8" width="96" height="96" />
+  <text x="120" y="78" fill="#171717" font-family="Georgia, 'Times New Roman', serif" font-size="64" font-weight="700">3D BID</text>
+</svg>

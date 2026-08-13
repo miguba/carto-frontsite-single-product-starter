@@ -13,12 +13,15 @@ announcement:
 
 # 显示在主页头中的店铺标识。
 # 可用占位符：{siteTitle}。
-# logo 留空时不显示 Logo，title 留空时不显示标题。
+# logo 使用一张包含图形与店名的完整 Logo 图片；留空时不显示。
+# logoWidth 和 logoHeight 可选，留空表示不限制图片尺寸。
+# 支持 px、rem、em、%、vw、vh 或 auto，例如 320px、6rem、50%。
 # favicon 用于浏览器标签页图标；留空时使用模板的默认图标。
 branding:
   href: /
-  logo: /cube.png
+  logo: /logo.svg
   logoAlt: '{siteTitle} logo'
-  title: '3D BID'
+  logoWidth: ''
+  logoHeight: ''
   favicon: /favicon.ico
 ---
