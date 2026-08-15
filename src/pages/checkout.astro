@@ -22,6 +22,7 @@ let checkoutError = '';
 let paymentConfigError = '';
 let paypalClientId = '';
 let paypalCardEnabled = false;
+let paypalCaptureMethod: 'manual' | 'automatic' = 'manual';
 let stripePublishableKey = '';
 let cartItems: Array<{
   skuId: string;
@@ -60,6 +61,7 @@ if (!productSlug || !sku || !Number.isInteger(quantity) || quantity < 1) {
       paypalCardEnabled =
         Boolean(paypalClientId) &&
         commerceConfig.payments.paypal.creditCardEnabled;
+      paypalCaptureMethod = commerceConfig.payments.paypal.captureMethod;
       stripePublishableKey = commerceConfig.payments.stripe.enabled
         ? commerceConfig.payments.stripe.publishableKey
         : '';
@@ -127,6 +129,7 @@ function normalizeSku(value: string) {
           <CheckoutForm
             paypalClientId={paypalClientId}
             paypalCardEnabled={paypalCardEnabled}
+            paypalCaptureMethod={paypalCaptureMethod}
             stripePublishableKey={stripePublishableKey}
             mapboxAccessToken={mapboxAccessToken}
             paymentConfigError={paymentConfigError}

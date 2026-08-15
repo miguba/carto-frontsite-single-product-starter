@@ -97,7 +97,12 @@ export type CommerceConfig = {
   };
   checkout: { successNotice: string };
   payments: {
-    paypal: { enabled: boolean; creditCardEnabled: boolean; clientId: string };
+    paypal: {
+      enabled: boolean;
+      creditCardEnabled: boolean;
+      clientId: string;
+      captureMethod: 'manual' | 'automatic';
+    };
     stripe: {
       enabled: boolean;
       publishableKey: string;

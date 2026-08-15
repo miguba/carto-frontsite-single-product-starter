@@ -27,6 +27,7 @@ describe('single-product storefront template', () => {
 
     expect(commerce).toContain("| 'authorized'");
     expect(commerce).toContain("captureMethod: 'manual' | 'automatic'");
+    expect(checkout).toContain("paypalCaptureMethod === 'automatic'");
     expect(checkout).toContain('updatedOrder.paymentStatus');
     expect(captureRoute).toContain('paymentStatus: order.paymentStatus');
     expect(checkout).not.toContain('?status=paid');

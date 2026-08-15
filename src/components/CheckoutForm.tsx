@@ -169,6 +169,7 @@ interface CheckoutFormProps {
   subtotal: number;
   /** PayPal client ID */
   paypalClientId: string;
+  paypalCaptureMethod: 'manual' | 'automatic';
   /** Whether PayPal card fields are enabled */
   paypalCardEnabled: boolean;
   /** Stripe publishable key, empty string if not available */
@@ -682,6 +683,7 @@ export default function CheckoutForm({
   cartItems,
   subtotal,
   paypalClientId,
+  paypalCaptureMethod,
   paypalCardEnabled,
   stripePublishableKey,
   mapboxAccessToken,
@@ -1841,7 +1843,10 @@ export default function CheckoutForm({
                       clientId: paypalClientId || 'test',
                       currency: CurrencySymbolCode[currency] || 'USD',
                       components: 'buttons,card-fields',
-                      intent: 'authorize',
+                      intent:
+                        paypalCaptureMethod === 'automatic'
+                          ? 'capture'
+                          : 'authorize',
                     }}
                   >
                     {canUsePayPalCard && cardFieldsEligible ? (
