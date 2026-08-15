@@ -36,7 +36,8 @@ export type Product = {
 export type Order = {
   orderNo: string;
   status: 'pending' | 'processing' | 'done' | 'cancelled';
-  paymentStatus: 'unpaid' | 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentStatus:
+    'unpaid' | 'pending' | 'authorized' | 'paid' | 'failed' | 'refunded';
   currency: string;
   subtotalAmount: number;
   shippingAmount: number;
@@ -97,7 +98,11 @@ export type CommerceConfig = {
   checkout: { successNotice: string };
   payments: {
     paypal: { enabled: boolean; creditCardEnabled: boolean; clientId: string };
-    stripe: { enabled: boolean; publishableKey: string };
+    stripe: {
+      enabled: boolean;
+      publishableKey: string;
+      captureMethod: 'manual' | 'automatic';
+    };
   };
 };
 

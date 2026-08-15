@@ -7,6 +7,33 @@ import { resolveContentImage } from '../src/lib/content-image';
 import { readFileSync } from 'node:fs';
 
 describe('single-product storefront template', () => {
+  it('preserves Stripe manual-capture authorization as a distinct order state', () => {
+    const commerce = readFileSync(
+      new URL('../src/lib/commerce.ts', import.meta.url),
+      'utf8',
+    );
+    const checkout = readFileSync(
+      new URL('../src/components/CheckoutForm.tsx', import.meta.url),
+      'utf8',
+    );
+    const orderPage = readFileSync(
+      new URL('../src/pages/orders/[orderNo].astro', import.meta.url),
+      'utf8',
+    );
+    const captureRoute = readFileSync(
+      new URL('../src/pages/api/checkout/capture.ts', import.meta.url),
+      'utf8',
+    );
+
+    expect(commerce).toContain("| 'authorized'");
+    expect(commerce).toContain("captureMethod: 'manual' | 'automatic'");
+    expect(checkout).toContain('updatedOrder.paymentStatus');
+    expect(captureRoute).toContain('paymentStatus: order.paymentStatus');
+    expect(checkout).not.toContain('?status=paid');
+    expect(orderPage).toContain("paymentStatus === 'authorized'");
+    expect(orderPage).toContain('Awaiting merchant capture');
+  });
+
   it('defines the product display through the local home block', () => {
     const homeContent = readFileSync(
       new URL('../src/content/blocks/home-content.md', import.meta.url),

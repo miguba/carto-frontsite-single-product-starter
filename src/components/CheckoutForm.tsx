@@ -1135,14 +1135,14 @@ export default function CheckoutForm({
     setState('capturing');
 
     try {
-      await postLocal<{ orderNo: string; paymentId: string }>(
-        '/api/checkout/capture',
-        {
-          orderNo: currentOrder.orderNo,
-          provider: currentPayment.provider,
-          providerOrderId,
-        },
-      );
+      const updatedOrder = await postLocal<{
+        orderNo: string;
+        paymentStatus: 'authorized' | 'paid';
+      }>('/api/checkout/capture', {
+        orderNo: currentOrder.orderNo,
+        provider: currentPayment.provider,
+        providerOrderId,
+      });
 
       setState('complete');
 
@@ -1154,7 +1154,7 @@ export default function CheckoutForm({
         billingInfo: undefined,
       });
 
-      window.location.href = `/orders/${encodeURIComponent(currentOrder.orderNo)}?status=paid`;
+      window.location.href = `/orders/${encodeURIComponent(updatedOrder.orderNo)}?status=${updatedOrder.paymentStatus}`;
     } catch (caught) {
       orderRef.current = null;
       paymentRef.current = null;
