@@ -40,6 +40,7 @@ try {
 
 const paid = order?.paymentStatus === 'paid';
 const authorized = order?.paymentStatus === 'authorized';
+const orderConfirmed = paid || authorized;
 const statusLabel = order ? capitalize(order.status) : '';
 const paymentLabel = order ? capitalize(order.paymentStatus) : '';
 const customerName = order
@@ -65,9 +66,7 @@ const successNotice = order
       orderStatus: statusLabel,
     })
   : '';
-const resultNotice = authorized
-  ? 'Your payment method has been authorized. The merchant will capture the payment after reviewing your order. No further action is required.'
-  : successNotice;
+const resultNotice = successNotice;
 ---
 
 <Layout
@@ -92,48 +91,32 @@ const resultNotice = authorized
             data-carto-block-type="block"
             class:list={[
               'grid gap-8 rounded-2xl border bg-white px-6 py-7 shadow-sm md:grid-cols-[minmax(0,1fr)_auto] md:items-end md:px-8 md:py-9',
-              paid
-                ? 'border-green-200'
-                : authorized
-                  ? 'border-amber-300'
-                  : 'border-gray-200',
+              orderConfirmed ? 'border-green-200' : 'border-gray-200',
             ]}
           >
             <div class="max-w-2xl">
               <div
                 class:list={[
                   'mb-5 grid h-11 w-11 place-items-center rounded-full text-xl font-bold',
-                  paid
+                  orderConfirmed
                     ? 'bg-green-100 text-green-700'
-                    : authorized
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-gray-100 text-gray-700',
+                    : 'bg-gray-100 text-gray-700',
                 ]}
               >
-                {paid ? '✓' : authorized ? '…' : '!'}
+                {orderConfirmed ? '✓' : '!'}
               </div>
               <p
                 class:list={[
                   'mb-2 text-xs font-bold uppercase tracking-[0.14em]',
-                  paid
-                    ? 'text-green-700'
-                    : authorized
-                      ? 'text-amber-800'
-                      : 'text-gray-600',
+                  orderConfirmed ? 'text-green-700' : 'text-gray-600',
                 ]}
               >
-                {paid
-                  ? 'Payment complete'
-                  : authorized
-                    ? 'Payment authorized'
-                    : 'Order status'}
+                {orderConfirmed ? 'Payment complete' : 'Order status'}
               </p>
               <h1 class="mb-3 text-3xl font-bold leading-tight text-gray-950 md:text-4xl">
-                {paid
+                {orderConfirmed
                   ? successHeading
-                  : authorized
-                    ? 'Your payment is awaiting merchant capture'
-                    : `Payment status: ${paymentLabel}`}
+                  : `Payment status: ${paymentLabel}`}
               </h1>
               <p class="max-w-xl text-base leading-7 text-gray-600">
                 {resultNotice}
@@ -168,7 +151,7 @@ const resultNotice = authorized
           <div class="grid overflow-hidden rounded-xl border border-gray-200 bg-white md:grid-cols-3">
             {[
               authorized
-                ? ['Authorized', 'Awaiting merchant capture', true]
+                ? ['Order placed', 'Payment authorized', true]
                 : ['Paid', 'Payment captured', paid],
               [
                 'Processing',

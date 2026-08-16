@@ -7,7 +7,7 @@ import { resolveContentImage } from '../src/lib/content-image';
 import { readFileSync } from 'node:fs';
 
 describe('single-product storefront template', () => {
-  it('preserves Stripe manual-capture authorization as a distinct order state', () => {
+  it('confirms manual-capture orders without showing a capture waiting step', () => {
     const commerce = readFileSync(
       new URL('../src/lib/commerce.ts', import.meta.url),
       'utf8',
@@ -32,7 +32,8 @@ describe('single-product storefront template', () => {
     expect(captureRoute).toContain('paymentStatus: order.paymentStatus');
     expect(checkout).not.toContain('?status=paid');
     expect(orderPage).toContain("paymentStatus === 'authorized'");
-    expect(orderPage).toContain('Awaiting merchant capture');
+    expect(orderPage).toContain('const orderConfirmed = paid || authorized');
+    expect(orderPage).not.toContain('Awaiting merchant capture');
   });
 
   it('defines the product display through the local home block', () => {
