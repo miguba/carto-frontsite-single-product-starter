@@ -76,6 +76,7 @@ export function renderTextTemplate(
 }
 
 export interface CookieConsentContent {
+  enabled: boolean;
   ariaLabel: string;
   heading: string;
   description: string;
@@ -485,6 +486,7 @@ export async function getCookieConsentContent(
   const privacyPolicy = isRecord(meta.privacyPolicy) ? meta.privacyPolicy : {};
 
   return {
+    enabled: typeof meta.enabled === 'boolean' ? meta.enabled : true,
     ariaLabel: firstString(meta.ariaLabel) || 'Cookie preferences',
     heading: firstString(meta.heading) || '',
     description: firstString(meta.description) || '',

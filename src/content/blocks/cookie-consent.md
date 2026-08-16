@@ -5,6 +5,9 @@ blockKey: cookie-consent
 type: layout
 title: Cookie Consent
 
+# 是否在店铺中展示 Cookie 使用提示。设为 false 时隐藏整个区域。
+enabled: true
+
 # 弹窗的无障碍标签。
 ariaLabel: Cookie preferences
 

@@ -11,11 +11,15 @@ export const CookieConsent = ({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    if (!content.enabled) {
+      setVisible(false);
+      return;
+    }
     const consent = localStorage.getItem(STORAGE_KEY);
     if (!consent) {
       setVisible(true);
     }
-  }, []);
+  }, [content.enabled]);
 
   const accept = () => {
     localStorage.setItem(STORAGE_KEY, 'accepted');
@@ -29,7 +33,7 @@ export const CookieConsent = ({
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!content.enabled || !visible) return null;
 
   const descriptionParts = content.description.split('{privacyPolicy}');
 
